@@ -23,10 +23,12 @@ supercell.py is a script to generate supercell data file of OpenMX.
 ## Supercell script
 * supercell.py - Simple script to generate supercell data file. OpenMX is supported.
 
+
 # Reference
 ALAMODE software package
 
 http://alamode.readthedocs.io/
+
 
 # Author
 Yuto Tanaka (Kanazawa University)

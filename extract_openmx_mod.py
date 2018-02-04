@@ -1,15 +1,14 @@
 #!/usr/bin/python
 #
-# extract_openMX_mod.py
+# extract_openmx_mod.py
 #
-# Simple script to extract atomic displacements, atomic forces, and
+# module to extract atomic displacements, atomic forces, and
 # energies from OpenMX output files.
 # 
 # Copyright (c) 2017 Yuto Tanaka
 #
-# Original script
-# Copyright (c) 2014, 2015, 2016 Terumasa Tadano
-# 
+ 
+
 """
 This python script extracts atomic displacements, atomics forces,
 and energies. 
@@ -25,10 +24,8 @@ import numpy as np
 
 def get_original_OpenMX_mod(file_original):
     
-    search_target1 = "Atoms.Number"
-    search_target2 = "Atoms.SpeciesAndCoordinates.Unit"
-    search_target3 = "<Atoms.SpeciesAndCoordinates"
-    search_target4 = "<Atoms.UnitVectors"
+    search_target = ["atoms.number", "atoms.speciesandcoordinates.unit", "<atoms.speciesandcoordinates", "<atoms.unitvectors"]
+
     #open original file
     f = open(file_original, 'r')
 
@@ -45,7 +42,7 @@ def get_original_OpenMX_mod(file_original):
     for line in f:
         ss = line.strip().split()
         #number of atoms
-        if len(ss) > 0 and ss[0] == search_target1:
+        if len(ss) > 0 and ss[0].lower() == search_target[0]:
             nat = int(ss[1])
     
         #atomic coordinates
@@ -66,15 +63,15 @@ def get_original_OpenMX_mod(file_original):
                 lavec_flag = 0
 
         # unit of atomic coordinates
-        if len(ss) > 0 and ss[0] == search_target2:
-            coord_unit = ss[1]
+        if len(ss) > 0 and ss[0].lower() == search_target[1]:
+            coord_unit = ss[1].lower()
         
-        if len(ss) > 0 and ss[0] == search_target3:
+        if len(ss) > 0 and ss[0].lower() == search_target[2]:
             coord_flag = 1
             # initialize x_frac0 array
             x_frac0 = np.zeros([nat, 3])
  
-        if len(ss) > 0 and ss[0] == search_target4:
+        if len(ss) > 0 and ss[0].lower() == search_target[3]:
             lavec_flag = 1
 
         if np.linalg.norm(lavec) > 0 and lavec_flag == 0:
@@ -89,7 +86,7 @@ def get_original_OpenMX_mod(file_original):
       
     lavec_inv = (np.linalg.inv(lavec)).T
     #convert to frac
-    if coord_unit == "ang" or coord_unit == "ANG" or coord_unit == "Ang":
+    if coord_unit == "ang":
         for i in range(nat):
             x_frac0[i] = np.dot(lavec_inv , x_frac0[i])
             
@@ -164,7 +161,7 @@ def print_displacements_OpenMX(md_files,
         for idata in range(ndata):
             #disp = x[idata, :, :] - x0 - disp_offset
             disp = x - x0 - disp_offset
-            disp[disp > 0.96] -= 1.0
+            disp[disp > 0.97] -= 1.0
             #disp = np.dot(vec_refold(disp), conv_inv)
             for i in range(nat):
                 disp[i] = np.dot(conv_inv, disp[i])

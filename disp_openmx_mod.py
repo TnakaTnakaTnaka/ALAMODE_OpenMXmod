@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 #
-# displace.py
+# disp_openmx_mod.py
 #
-# Simple script to generate OpenMX input files 
-# of given displacement patterns.
+# module to generate OpenMX input files 
+# of given displacement patterns in ALAMODE.
 #
 # Copyright (c) 2017 Yuto Tanaka
 #
-# oroginal script
-# Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 #
 
 """
@@ -20,8 +18,8 @@ import numpy as np
 
 def read_OpenMX_input(file_in):
 
-    search_target1 = "Atoms.Number"
-    search_target2 = "<Atoms.UnitVectors"
+    search_target = ["atoms.number", "<atoms.unitvectors"]
+
     #open original file
     f = open(file_in, 'r')
 
@@ -31,12 +29,11 @@ def read_OpenMX_input(file_in):
     lavec_row = 0
     lavec = np.zeros((3, 3))
 
-
     #read oroginal file and pull out some infomations
     for line in f:
         ss = line.strip().split()
         #number of atoms
-        if len(ss) > 0 and ss[0] == search_target1:
+        if len(ss) > 0 and ss[0].lower() == search_target[0]:
             nat = int(ss[1])
  
         #latice vector
@@ -47,7 +44,7 @@ def read_OpenMX_input(file_in):
             if lavec_row == 3:
                 lavec_flag = 0
  
-        if len(ss) > 0 and ss[0] == search_target2:
+        if len(ss) > 0 and ss[0].lower() == search_target[1]:
             lavec_flag = 1
 
         if np.linalg.norm(lavec) > 0 and lavec_flag == 0:
@@ -69,12 +66,8 @@ def read_OpenMX_input(file_in):
 
 def write_OpenMX_input(prefix, counter, nzerofills, disp, lavec, file_in):
   
-    search_target1 = "Atoms.Number"
-    search_target2 = "<Atoms.SpeciesAndCoordinates"
-    search_target3 = "Atoms.SpeciesAndCoordinates.Unit"
-    search_target4 = "System.Name"
+    search_target = ["atoms.number", "<atoms.speciesandcoordinates", "atoms.speciesandcoordinates.unit", "system.name"]
 
-    str_ang = ["ANG", "ang", "Ang"]
 
     filename = prefix + str(counter).zfill(nzerofills) + ".dat"
     fout = open(filename, 'w')
@@ -95,7 +88,7 @@ def write_OpenMX_input(prefix, counter, nzerofills, disp, lavec, file_in):
     for line in fin:
         ss = line.strip().split()
         #number of atoms
-        if len(ss) > 0 and ss[0] == search_target1:
+        if len(ss) > 0 and ss[0].lower() == search_target[0]:
             nat = int(ss[1])
             x_frac = np.zeros((nat, 3))
             #coord = OrderedDict()
@@ -104,8 +97,8 @@ def write_OpenMX_input(prefix, counter, nzerofills, disp, lavec, file_in):
                 coord[i+1] = []
  
         #coordinates_unit
-        if len(ss) > 0 and ss[0] == search_target3:
-            coord_unit = ss[1]
+        if len(ss) > 0 and ss[0].lower() == search_target[2]:
+            coord_unit = ss[1].lower()
         
         #coordinates
         if coord_flag == 1:
@@ -117,7 +110,7 @@ def write_OpenMX_input(prefix, counter, nzerofills, disp, lavec, file_in):
                     coord[int(ss[0])].append(ss[i])
        
             #convert to frac
-            if coord_unit in str_ang:
+            if coord_unit == "ang":
                 coord[coord_row+1] = np.dot(conv, coord[coord_row+1])
 
             # add displacement
@@ -132,7 +125,7 @@ def write_OpenMX_input(prefix, counter, nzerofills, disp, lavec, file_in):
             if coord_row == nat:
                 coord_flag = 0
 
-        elif len(ss) > 0 and ss[0] == search_target4:
+        elif len(ss) > 0 and ss[0].lower == search_target[3]:
             ss[1] = prefix + str(counter).zfill(nzerofills)
             fout.write("                      ".join(map(str, ss)))
             fout.write("\n")
@@ -140,12 +133,10 @@ def write_OpenMX_input(prefix, counter, nzerofills, disp, lavec, file_in):
         else:
             fout.write(line)
 
-
-        if len(ss) > 0 and ss[0] == search_target2:
+        if len(ss) > 0 and ss[0].lower() == search_target[1]:
             coord_flag = 1
 
 
     fin.close()
     fout.close()
-
 
